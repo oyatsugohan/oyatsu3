@@ -8,7 +8,7 @@ import time
  
 # ページ設定
 st.set_page_config(
-    page_title="フィッシング詐欺検知アプリ",
+    page_title="詐欺検知アプリ",
     page_icon="🛡️",
     layout="wide"
 )
