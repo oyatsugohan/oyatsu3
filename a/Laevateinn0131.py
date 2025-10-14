@@ -960,3 +960,12 @@ else:  # 使い方
 # フッター
 st.markdown("---")
 st.caption("⚠️ このアプリは詐欺電話対策の補助ツールです。最終的な判断はご自身で行ってください。")
+
+st.header('詐欺の特徴')
+st.write('特徴を知りたい詐欺の種類を選択してください')
+if st.button('サイトによる詐欺'):
+    st.write('')
+elif st.button('メールによる詐欺'):
+    st.write('')
+elif st.button('電話による詐欺'):
+    st.write('')
