@@ -1,5 +1,5 @@
 import streamlit as st
-import google as genai
+import google6 as genai
 import json
 import re
 from datetime import datetime
@@ -843,54 +843,6 @@ elif page == "📊 統計情報":
        st.session_state.check_history = []
        st.success("履歴をクリアしました")
        st.rerun()
-elif page == "📢 通報":
-   st.header("📢 怪しい電話番号を通報")
-   st.markdown("""
-   詐欺や迷惑電話の可能性がある番号を通報してください。
-   通報情報は他のユーザーと共有され、詐欺被害の防止に役立ちます。
-   """)
-   with st.form("report_form"):
-       report_number = st.text_input("電話番号", placeholder="例: 090-1234-5678")
-       report_detail = st.text_area(
-           "詳細情報",
-           placeholder="どのような内容の電話でしたか？具体的に記入してください。",
-           height=150
-       )
-       report_category = st.selectbox(
-           "分類",
-           ["詐欺", "迷惑営業", "無言電話", "その他"]
-       )
-       submitted = st.form_submit_button("📢 通報する")
-       if submitted and report_number:
-           # 通報情報を追加
-           report = {
-               "number": report_number,
-               "description": f"[{report_category}] {report_detail}",
-               "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-               "reports": 1
-           }
-           # 既存の通報があるか確認
-           existing = None
-           for case in st.session_state.scam_database["reported_cases"]:
-               if case["number"] == report_number:
-                   existing = case
-                   break
-           if existing:
-               existing["reports"] += 1
-               existing["description"] += f"\n[追加通報 {existing['reports']}] {report_detail}"
-           else:
-               st.session_state.scam_database["reported_cases"].append(report)
-           st.success("✅ 通報ありがとうございます！情報はデータベースに追加されました。")
-   # 通報履歴
-   st.markdown("---")
-   st.subheader("📋 最近の通報情報")
-   if st.session_state.scam_database["reported_cases"]:
-       for case in reversed(st.session_state.scam_database["reported_cases"][-5:]):
-           with st.expander(f"📞 {case['number']} ({case['reports']}件の通報)"):
-               st.markdown(f"**通報日時:** {case['timestamp']}")
-               st.markdown(f"**詳細:**\n{case['description']}")
-   else:
-       st.info("まだ通報情報がありません")
 elif page == "🗄️ データベース":
    st.header("🗄️ 詐欺電話データベース")
    tab1, tab2, tab3 = st.tabs(["既知の詐欺番号", "疑わしいプレフィックス", "通報された番号"])
