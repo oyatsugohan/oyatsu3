@@ -346,7 +346,7 @@ def analyze_phone_number(number):
     return result
 
 # メインタブ
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+tab1, tab2, tab3 = st.tabs([
     "🔍 URLチェック", 
     "📧 メールチェック", 
     "📞 電話番号チェック",
