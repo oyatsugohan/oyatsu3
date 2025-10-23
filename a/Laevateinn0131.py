@@ -672,7 +672,3 @@ with tab3:
                 st.success("### 💡 推奨事項")
             for rec in result['recommendations']:
                 st.markdown(f"- {rec}")
-    
-    st.markdown("---")
-    st.subheader("🧪 サンプル番号でテスト")
-    sample_col1, sample
