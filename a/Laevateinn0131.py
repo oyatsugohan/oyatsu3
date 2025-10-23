@@ -418,7 +418,7 @@ with tab1:
             with st.spinner("🤖 AIが分析中..."):
                 try:
                     genai.configure(api_key=api_key)
-                    model = genai.GenerativeModel('gemini-2.5-flash')
+                    model = genai.GenerativeModel('gemini-1.5-flash')
                     
                     prompt = f"""以下のURLがフィッシング詐欺サイトである可能性を分析してください。
 URL: {url_input}
@@ -537,7 +537,7 @@ with tab2:
             with st.spinner("🤖 AIが分析中..."):
                 try:
                     genai.configure(api_key=api_key)
-                    model = genai.GenerativeModel('gemini-2.5-flash')
+                    model = genai.GenerativeModel('gemini-1.5-flash')
                     
                     prompt = f"""以下のメール内容がフィッシング詐欺である可能性を分析してください。
 メール内容:
