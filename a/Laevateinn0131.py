@@ -43,10 +43,10 @@ QUIZ_SAMPLES = [
 ]
 
 # Gemini AI初期化
-def init_gemini(api_key):
+def init_gemini(api_key, model_name='gemini-1.5-flash'):
     try:
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-pro')
+        model = genai.GenerativeModel(model_name)
         return model
     except Exception as e:
         st.error(f"Gemini AI初期化エラー: {str(e)}")
@@ -378,11 +378,19 @@ def main():
     # サイドバーでAPI設定
     with st.sidebar:
         st.header("⚙️ 設定")
+        
+        # モデル選択
+        model_name = st.selectbox(
+            "🤖 Gemini モデル",
+            ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-exp"],
+            help="flash: 高速・低コスト, pro: 高精度, 2.0: 最新実験版"
+        )
+        
         api_key = st.text_input(
             "Gemini API キー", 
             type="password",
             value=st.session_state.gemini_api_key,
-            help="https://makersuite.google.com/app/apikey から取得"
+            help="https://aistudio.google.com/app/apikey から取得"
         )
         
         if api_key != st.session_state.gemini_api_key:
@@ -406,7 +414,7 @@ def main():
     # Gemini初期化
     model = None
     if use_ai and st.session_state.gemini_api_key:
-        model = init_gemini(st.session_state.gemini_api_key)
+        model = init_gemini(st.session_state.gemini_api_key, model_name)
     
     # ホーム画面
     if tab == "🏠 ホーム":
@@ -609,10 +617,16 @@ def main():
         
         st.success("""
         ### 🤖 Gemini AI の使い方
-        1. Google AI Studio (https://makersuite.google.com/app/apikey) でAPIキーを取得
+        1. Google AI Studio (https://aistudio.google.com/app/apikey) でAPIキーを取得
         2. サイドバーの「Gemini API キー」欄に入力
-        3. 「AI分析を使用」にチェックを入れる
-        4. より高度な脅威分析が利用可能に！
+        3. モデルを選択（推奨: gemini-1.5-flash）
+        4. 「AI分析を使用」にチェックを入れる
+        5. より高度な脅威分析が利用可能に！
+        
+        **利用可能なモデル:**
+        - **gemini-1.5-flash**: 高速で低コスト（推奨）
+        - **gemini-1.5-pro**: より高精度な分析
+        - **gemini-2.0-flash-exp**: 最新の実験版モデル
         """)
         
         st.error("""
