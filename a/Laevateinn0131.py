@@ -43,10 +43,10 @@ QUIZ_SAMPLES = [
 ]
 
 # Gemini AI初期化
-def init_gemini(api_key, model_name='gemini-1.5-flash'):
+def init_gemini(api_key):
     try:
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel(model_name)
+        model = genai.GenerativeModel('gemini-2.0-flash-exp')
         return model
     except Exception as e:
         st.error(f"Gemini AI初期化エラー: {str(e)}")
@@ -379,12 +379,7 @@ def main():
     with st.sidebar:
         st.header("⚙️ 設定")
         
-        # モデル選択
-        model_name = st.selectbox(
-            "🤖 Gemini モデル",
-            ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-exp"],
-            help="flash: 高速・低コスト, pro: 高精度, 2.0: 最新実験版"
-        )
+        st.info("🤖 使用モデル: **Gemini 2.0 Flash (実験版)**")
         
         api_key = st.text_input(
             "Gemini API キー", 
@@ -414,7 +409,7 @@ def main():
     # Gemini初期化
     model = None
     if use_ai and st.session_state.gemini_api_key:
-        model = init_gemini(st.session_state.gemini_api_key, model_name)
+        model = init_gemini(st.session_state.gemini_api_key)
     
     # ホーム画面
     if tab == "🏠 ホーム":
@@ -619,14 +614,11 @@ def main():
         ### 🤖 Gemini AI の使い方
         1. Google AI Studio (https://aistudio.google.com/app/apikey) でAPIキーを取得
         2. サイドバーの「Gemini API キー」欄に入力
-        3. モデルを選択（推奨: gemini-1.5-flash）
-        4. 「AI分析を使用」にチェックを入れる
-        5. より高度な脅威分析が利用可能に！
+        3. 「AI分析を使用」にチェックを入れる
+        4. Gemini 2.0 Flash による最新AI分析が利用可能に！
         
-        **利用可能なモデル:**
-        - **gemini-1.5-flash**: 高速で低コスト（推奨）
-        - **gemini-1.5-pro**: より高精度な分析
-        - **gemini-2.0-flash-exp**: 最新の実験版モデル
+        **使用モデル:**
+        - **Gemini 2.0 Flash (実験版)**: Googleの最新AIモデル
         """)
         
         st.error("""
