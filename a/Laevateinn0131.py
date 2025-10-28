@@ -19,8 +19,6 @@ if 'quiz_answered' not in st.session_state:
     st.session_state.quiz_answered = False
 if 'gemini_api_key' not in st.session_state:
     st.session_state.gemini_api_key = ""
-if 'api_key_validated' not in st.session_state:
-    st.session_state.api_key_validated = False
  
 # クイズデータ
 QUIZ_SAMPLES = [
@@ -44,129 +42,79 @@ QUIZ_SAMPLES = [
     }
 ]
  
-# Gemini AI初期化（改善版）
+# Gemini AI初期化
 def init_gemini(api_key):
     try:
-        # APIキーのバリデーション
-        if not api_key or len(api_key.strip()) == 0:
-            st.error("❌ APIキーが入力されていません")
-            return None
-        
-        # APIキーの形式チェック（基本的なチェック）
-        api_key = api_key.strip()
-        if not api_key.startswith('AIza'):
-            st.error("❌ 無効なAPIキー形式です。APIキーは 'AIza' で始まる必要があります")
-            return None
-        
-        # Gemini設定
         genai.configure(api_key=api_key)
-        
-        # モデルの初期化とテスト
         model = genai.GenerativeModel('gemini-2.0-flash-exp')
-        
-        # 簡単なテストリクエスト
-        test_response = model.generate_content("こんにちは")
-        
-        if test_response:
-            st.session_state.api_key_validated = True
-            return model
-        else:
-            st.error("❌ APIキーの検証に失敗しました")
-            st.session_state.api_key_validated = False
-            return None
-            
+        return model
     except Exception as e:
-        error_msg = str(e)
-        st.session_state.api_key_validated = False
-        
-        if "API_KEY_INVALID" in error_msg:
-            st.error("❌ **APIキーが無効です**\n\n以下を確認してください:\n- APIキーが正しくコピーされているか\n- APIキーが有効化されているか\n- Google AI Studio (https://aistudio.google.com/app/apikey) で新しいキーを作成してください")
-        elif "PERMISSION_DENIED" in error_msg:
-            st.error("❌ **アクセス権限がありません**\n\nAPIキーの権限設定を確認してください")
-        elif "RESOURCE_EXHAUSTED" in error_msg:
-            st.error("❌ **APIクォータを超過しました**\n\nしばらく待ってから再度お試しください")
-        else:
-            st.error(f"❌ **Gemini AI初期化エラー**\n\n{error_msg}")
-        
         return None
  
 # Gemini AIで電話番号分析
 def analyze_phone_with_ai(number, model):
     prompt = f"""
-あなたは詐欺対策の専門家です。以下の電話番号を分析し、必ずJSON形式のみで回答してください。
-説明文は一切含めず、JSONのみを出力してください。
+あなたは詐欺対策の専門家です。以下の電話番号を分析し、JSON形式で回答してください。
 
 電話番号: {number}
 
-以下の形式で回答してください（この形式を厳守）:
-{{
-    "risk_level": "危険または注意または安全または緊急のいずれか",
-    "risk_score": 数値(0-100),
-    "caller_type": "発信者のタイプ",
-    "warnings": ["警告メッセージのリスト"],
-    "details": ["詳細情報のリスト"],
-    "ai_analysis": "AIによる総合分析"
-}}
+以下の項目を分析してください:
+⒈　リスクレベル（危険/注意/安全/緊急）
+⒉　リスクスコア（0-100）
+⒊　発信者タイプ（個人携帯/企業/公的機関/IP電話/国際電話など）
+⒋　警告メッセージ　（あれば）
+⒌　詳細情報
 
-JSON以外の文章は出力しないでください。
+回答は必ず以下のJSON形式で
+{{
+    "risk_level":"注意",
+    "risk_score":60,
+    "caller_type":"IP電話利用者",
+    "warnings":["警告１","警告２"]
+    "ai_analysis":"AIによる総合分析"
+}}
 """
    
     try:
         response = model.generate_content(prompt)
         import json
-        import re
-        
-        # レスポンステキストを取得
         result_text = response.text.strip()
         
-        # コードブロックを削除
+        # JSONブロックの抽出
         if '```json' in result_text:
-            result_text = re.search(r'```json\s*(.*?)\s*```', result_text, re.DOTALL)
-            if result_text:
-                result_text = result_text.group(1).strip()
+            result_text = result_text.split('```json')[1].split('```')[0].strip()
         elif '```' in result_text:
-            result_text = re.search(r'```\s*(.*?)\s*```', result_text, re.DOTALL)
-            if result_text:
-                result_text = result_text.group(1).strip()
+            result_text = result_text.split('```')[1].split('```')[0].strip()
         
-        # JSON部分のみを抽出（{...}）
-        json_match = re.search(r'\{.*\}', result_text, re.DOTALL)
-        if json_match:
-            result_text = json_match.group(0)
-        
-        # JSONパース
+
         result = json.loads(result_text)
-        
-        # 必須フィールドの確認
-        required_fields = ['risk_level', 'risk_score', 'caller_type', 'warnings', 'details', 'ai_analysis']
-        for field in required_fields:
-            if field not in result:
-                raise ValueError(f"必須フィールド '{field}' が見つかりません")
-        
         result['number'] = number
         result['ai_powered'] = True
         return result
-        
-    except json.JSONDecodeError as e:
-        st.error(f"❌ JSON解析エラー: レスポンスが正しいJSON形式ではありません\n詳細: {str(e)}")
-        return None
     except Exception as e:
-        st.error(f"❌ AI分析エラー: {str(e)}")
+        st.error(f"AI分析エラー：{str(e)}")
         return None
+
  
 # Gemini AIでURL分析
 def analyze_url_with_ai(url, model):
     prompt = f"""
-あなたはサイバーセキュリティの専門家です。以下のURLを分析し、必ずJSON形式のみで回答してください。
-説明文は一切含めず、JSONのみを出力してください。
+あなたはサイバーセキュリティの専門家です。以下のURLを分析し、JSON形式で回答してください。
 
 URL: {url}
 
-以下の形式で回答してください（この形式を厳守）:
+以下の項目を分析してください
+⒈　リスクレベル（危険/注意/安全）
+⒉　リスクスコア（0-100）
+⒊　HTTPSの使用有無
+⒋　警告メッセージ（あれば）
+⒌　詳細情報
+
+回答は必ず以下のJSON形式で:
 {{
-    "risk_level": "危険または注意または安全のいずれか",
-    "risk_score": 数値(0-100),
-    "warnings": ["警告メッセージのリスト"],
+    "risk_level": "注意",
+    "risk_score": 60,
+    "warnings": ["警告１","警告２"],
     "details": ["詳細情報のリスト"],
     "ai_analysis": "AIによる総合分析"
 }}
@@ -177,107 +125,64 @@ JSON以外の文章は出力しないでください。
     try:
         response = model.generate_content(prompt)
         import json
-        import re
-        
-        # レスポンステキストを取得
         result_text = response.text.strip()
         
-        # コードブロックを削除
         if '```json' in result_text:
-            result_text = re.search(r'```json\s*(.*?)\s*```', result_text, re.DOTALL)
-            if result_text:
-                result_text = result_text.group(1).strip()
+            result_text = result_text.split('```json')[1].split('```')[0].strip()
         elif '```' in result_text:
-            result_text = re.search(r'```\s*(.*?)\s*```', result_text, re.DOTALL)
-            if result_text:
-                result_text = result_text.group(1).strip()
+            result_text = result_text.split('```')[1].split('```')[0].strip()
         
-        # JSON部分のみを抽出（{...}）
-        json_match = re.search(r'\{.*\}', result_text, re.DOTALL)
-        if json_match:
-            result_text = json_match.group(0)
-        
-        # JSONパース
+
         result = json.loads(result_text)
-        
-        # 必須フィールドの確認
-        required_fields = ['risk_level', 'risk_score', 'warnings', 'details', 'ai_analysis']
-        for field in required_fields:
-            if field not in result:
-                raise ValueError(f"必須フィールド '{field}' が見つかりません")
-        
         result['url'] = url
         result['ai_powered'] = True
         return result
-        
-    except json.JSONDecodeError as e:
-        st.error(f"❌ JSON解析エラー: レスポンスが正しいJSON形式ではありません\n詳細: {str(e)}")
-        return None
     except Exception as e:
-        st.error(f"❌ AI分析エラー: {str(e)}")
+        st.error(f"AI分析エラー：{str(e)}")
         return None
  
 # Gemini AIでメール分析
 def analyze_email_with_ai(content, model):
     prompt = f"""
-あなたはフィッシング詐欺対策の専門家です。以下のメール内容を分析し、必ずJSON形式のみで回答してください。
-説明文は一切含めず、JSONのみを出力してください。
+あなたはフィッシング詐欺対策の専門家です。以下のメール内容を分析し、JSON形式で回答してください。
 
 メール内容:
 {content}
 
-以下の形式で回答してください（この形式を厳守）:
+以下の項目を分析してください:
+⒈　フィッシング詐欺の可能性（危険/注意/安全）
+⒉　リスクスコア（0-100）
+⒊　検出された疑わしいキーワード
+⒋　緊急性をあおる表現の有無
+⒌　URLの安全性
+⒍　警告メッセージ（あれば）
+⒎　詳細な分析結果
+
+回答は必ず以下のJSON形式で:
 {{
-    "risk_level": "危険または注意または安全のいずれか",
-    "risk_score": 数値(0-100),
-    "warnings": ["警告メッセージのリスト"],
-    "details": ["詳細情報のリスト"],
+    "risk_level": "注意",
+    "risk_score": 60,
+    "warnings": ["警告１","警告２"],
+    "details": ["詳細１","詳細２"],
     "ai_analysis": "AIによる総合分析と推奨事項"
 }}
-
-JSON以外の文章は出力しないでください。
 """
    
     try:
         response = model.generate_content(prompt)
         import json
-        import re
-        
-        # レスポンステキストを取得
         result_text = response.text.strip()
-        
-        # コードブロックを削除
+
         if '```json' in result_text:
-            result_text = re.search(r'```json\s*(.*?)\s*```', result_text, re.DOTALL)
-            if result_text:
-                result_text = result_text.group(1).strip()
+            result_text = result_text.split('```json')[1].split('```')[0].strip()
         elif '```' in result_text:
-            result_text = re.search(r'```\s*(.*?)\s*```', result_text, re.DOTALL)
-            if result_text:
-                result_text = result_text.group(1).strip()
+            result_text = result_text.split('```')[1].split('```')[0].strip()
         
-        # JSON部分のみを抽出（{...}）
-        json_match = re.search(r'\{.*\}', result_text, re.DOTALL)
-        if json_match:
-            result_text = json_match.group(0)
-        
-        # JSONパース
         result = json.loads(result_text)
-        
-        # 必須フィールドの確認
-        required_fields = ['risk_level', 'risk_score', 'warnings', 'details', 'ai_analysis']
-        for field in required_fields:
-            if field not in result:
-                raise ValueError(f"必須フィールド '{field}' が見つかりません")
-        
         result['ai_powered'] = True
         return result
-        
-    except json.JSONDecodeError as e:
-        st.error(f"❌ JSON解析エラー: レスポンスが正しいJSON形式ではありません\n詳細: {str(e)}")
-        return None
     except Exception as e:
-        st.error(f"❌ AI分析エラー: {str(e)}")
+        st.error(f"AI分析エラー:{str(e)}")
         return None
  
 # 従来の電話番号分析関数（フォールバック用）
@@ -295,7 +200,7 @@ def analyze_phone_number(number):
         risk_level = '緊急'
         details.append('✅ 緊急通報番号です')
     # 公的機関パターン
-    elif normalized.startswith('033581') or normalized.startswith('035253'):
+    elif normalized.startswith('033581') or normalized.startswith('0800'):
         caller_type = '公的機関'
         details.append('🏛️ 官公庁の番号パターン')
     # フリーダイヤル
