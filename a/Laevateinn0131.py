@@ -390,56 +390,32 @@ def main():
             "Gemini API キー",
             type="password",
             value=st.session_state.gemini_api_key,
-            help="https://aistudio.google.com/app/apikey から取得してください"
+            help="https://aistudio.google.com/app/apikey から取得"
         )
-       
-        # API キー検証ボタン
-        if api_key and api_key != st.session_state.gemini_api_key:
-            if st.button("🔍 APIキーを検証", type="primary"):
-                with st.spinner("検証中..."):
-                    st.session_state.gemini_api_key = api_key
-                    test_model = init_gemini(api_key)
-                    if test_model:
-                        st.success("✅ APIキーが正常に検証されました！")
-                    st.rerun()
+
+        if api_key != st.session_state.gemini_api_key:
+            st.session_state/gemini_api_key = api_key
         
-        use_ai = st.checkbox(
-            "🤖 AI分析を使用", 
-            value=st.session_state.api_key_validated and bool(st.session_state.gemini_api_key),
-            disabled=not st.session_state.api_key_validated
-        )
-       
-        if not st.session_state.gemini_api_key:
-            st.warning("⚠️ APIキーを入力して「検証」ボタンを押してください")
-            st.info("""
-            **APIキー取得方法:**
-            1. https://aistudio.google.com/app/apikey にアクセス
-            2. 「Create API Key」をクリック
-            3. 新しいプロジェクトを作成するか、既存のプロジェクトを選択
-            4. 生成されたAPIキーをコピー
-            5. 上記の入力欄に貼り付け
-            """)
-        elif st.session_state.api_key_validated:
-            st.success("✅ AI分析が有効です")
+        #APIキーが有効かチェック
+        model = None
+        use_ai = False
+        if api_key:
+            model = init_gemini(api_key)
+            if model:
+                use_ai = st.checkbox("🤖AI分析を使用",value=True)
+                st.success("✅AI分析が有効です")
+            else:
+                st.error("✖APIキーが無効です。正しいキーを入力してください")
         else:
-            st.error("❌ APIキーの検証に失敗しています")
-       
+            st.warning("⚠️APIキーを入力するとAI分析が有効になります")
+        
         st.divider()
-       
+
         # タブ選択
         tab = st.radio(
             "メニュー",
             ["🏠 ホーム", "📞 電話番号チェック", "🔗 URLチェック", "📧 メールチェック", "❓ 学習クイズ", "💾 脅威データベース", "📖 使い方ガイド"]
         )
-   
-    # Gemini初期化（検証済みの場合のみ）
-    model = None
-    if use_ai and st.session_state.api_key_validated and st.session_state.gemini_api_key:
-        try:
-            genai.configure(api_key=st.session_state.gemini_api_key)
-            model = genai.GenerativeModel('gemini-2.0-flash-exp')
-        except:
-            st.sidebar.error("⚠️ モデルの初期化に失敗しました")
    
     # ホーム画面
     if tab == "🏠 ホーム":
@@ -485,12 +461,9 @@ def main():
     elif tab == "📞 電話番号チェック":
         st.header("📞 電話番号チェック")
        
-        # セッション状態に電話番号を保存
-        if 'phone_number_input' not in st.session_state:
-            st.session_state.phone_number_input = ""
+        phone_number = st.text_input("電話番号を入力",placeholder="例: 090-1234-5678,03-1234-5678")
+        #ここまでチェック済み
        
-        # サンプルボタン
-        st.subheader("📋 サンプルを試す")
         col1, col2, col3, col4 = st.columns(4)
         with col1:
             if st.button("✅ 安全サンプル", use_container_width=True):
