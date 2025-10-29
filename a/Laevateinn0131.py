@@ -47,11 +47,34 @@ QUIZ_SAMPLES = [
 # Gemini AI初期化
 def init_gemini(api_key):
     try:
+        # APIキーの前後の空白を削除
+        api_key = api_key.strip()
+        
+        # APIキーの基本的な検証
+        if not api_key:
+            return None, "APIキーが入力されていません"
+        
+        if not api_key.startswith('AIza'):
+            return None, "APIキーは 'AIza' で始まる必要があります"
+        
+        # Gemini設定
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-2.0-flash-exp')
-        return model
+        
+        # 簡単なテスト実行で検証
+        test_response = model.generate_content("Hello")
+        
+        return model, "成功"
     except Exception as e:
-        return None
+        error_msg = str(e)
+        if "API_KEY_INVALID" in error_msg:
+            return None, "APIキーが無効です。Google AI Studioで正しいキーを取得してください"
+        elif "PERMISSION_DENIED" in error_msg:
+            return None, "APIキーの権限がありません。新しいキーを作成してください"
+        elif "RESOURCE_EXHAUSTED" in error_msg:
+            return None, "API使用量の上限に達しました。しばらく待ってから再試行してください"
+        else:
+            return None, f"エラー: {error_msg}"
  
 # Gemini AIで電話番号分析
 def analyze_phone_with_ai(number, model):
@@ -391,25 +414,62 @@ def main():
             value=st.session_state.gemini_api_key,
             help="https://aistudio.google.com/app/apikey から取得"
         )
-
-        if api_key != st.session_state.gemini_api_key:
-            st.session_state.gemini_api_key = api_key  # 修正: / → .
-            st.session_state.api_key_validated = False  # キー変更時は再検証が必要
+        
+        # APIキーの検証ボタン
+        if st.button("🔍 APIキーを検証"):
+            if api_key:
+                with st.spinner("検証中..."):
+                    model_result, message = init_gemini(api_key)
+                    if model_result:
+                        st.session_state.gemini_api_key = api_key.strip()
+                        st.session_state.api_key_validated = True
+                        st.success(f"✅ 検証成功: {message}")
+                        st.rerun()
+                    else:
+                        st.session_state.api_key_validated = False
+                        st.error(f"❌ 検証失敗: {message}")
+            else:
+                st.warning("⚠️ APIキーを入力してください")
         
         # APIキーが有効かチェック
         model = None
         use_ai = False
-        if api_key:
-            model = init_gemini(api_key)
-            if model:
-                st.session_state.api_key_validated = True
+        
+        if st.session_state.api_key_validated and st.session_state.gemini_api_key:
+            model_result, message = init_gemini(st.session_state.gemini_api_key)
+            if model_result:
+                model = model_result
                 use_ai = st.checkbox("🤖AI分析を使用", value=True)
-                st.success("✅AI分析が有効です")
+                st.success("✅ AI分析が有効です")
+                
+                # APIキー情報の表示
+                masked_key = st.session_state.gemini_api_key[:10] + "..." + st.session_state.gemini_api_key[-4:]
+                st.caption(f"使用中のキー: {masked_key}")
+                
+                if st.button("🗑️ APIキーをクリア"):
+                    st.session_state.gemini_api_key = ""
+                    st.session_state.api_key_validated = False
+                    st.rerun()
             else:
                 st.session_state.api_key_validated = False
-                st.error("✖APIキーが無効です。正しいキーを入力してください")
+                st.error(f"✖ {message}")
         else:
-            st.warning("⚠️APIキーを入力するとAI分析が有効になります")
+            st.info("⚠️ APIキーを入力して検証ボタンを押してください")
+            
+            # APIキー取得のヘルプ
+            with st.expander("📘 APIキーの取得方法"):
+                st.markdown("""
+                1. [Google AI Studio](https://aistudio.google.com/app/apikey) にアクセス
+                2. Googleアカウントでログイン
+                3. 「Create API Key」をクリック
+                4. 生成されたキーをコピー（'AIza' で始まります）
+                5. 上の入力欄に貼り付けて「検証」ボタンをクリック
+                
+                **注意:**
+                - APIキーは厳重に管理してください
+                - 他人と共有しないでください
+                - コピー時に余分なスペースや改行が入らないよう注意
+                """)
         
         st.divider()
 
