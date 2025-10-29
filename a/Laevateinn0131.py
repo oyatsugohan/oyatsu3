@@ -19,6 +19,8 @@ if 'quiz_answered' not in st.session_state:
     st.session_state.quiz_answered = False
 if 'gemini_api_key' not in st.session_state:
     st.session_state.gemini_api_key = ""
+if 'api_key_validated' not in st.session_state:
+    st.session_state.api_key_validated = False
  
 # クイズデータ
 QUIZ_SAMPLES = [
@@ -59,18 +61,18 @@ def analyze_phone_with_ai(number, model):
 電話番号: {number}
 
 以下の項目を分析してください:
-⒈　リスクレベル（危険/注意/安全/緊急）
-⒉　リスクスコア（0-100）
-⒊　発信者タイプ（個人携帯/企業/公的機関/IP電話/国際電話など）
-⒋　警告メッセージ　（あれば）
-⒌　詳細情報
+1. リスクレベル（危険/注意/安全/緊急）
+2. リスクスコア（0-100）
+3. 発信者タイプ（個人携帯/企業/公的機関/IP電話/国際電話など）
+4. 警告メッセージ（あれば）
+5. 詳細情報
 
-回答は必ず以下のJSON形式で
+回答は必ず以下のJSON形式で:
 {{
     "risk_level":"注意",
     "risk_score":60,
     "caller_type":"IP電話利用者",
-    "warnings":["警告１","警告２"]
+    "warnings":["警告１","警告２"],
     "ai_analysis":"AIによる総合分析"
 }}
 """
@@ -86,7 +88,6 @@ def analyze_phone_with_ai(number, model):
         elif '```' in result_text:
             result_text = result_text.split('```')[1].split('```')[0].strip()
         
-
         result = json.loads(result_text)
         result['number'] = number
         result['ai_powered'] = True
@@ -94,7 +95,6 @@ def analyze_phone_with_ai(number, model):
     except Exception as e:
         st.error(f"AI分析エラー：{str(e)}")
         return None
-
  
 # Gemini AIでURL分析
 def analyze_url_with_ai(url, model):
@@ -103,12 +103,12 @@ def analyze_url_with_ai(url, model):
 
 URL: {url}
 
-以下の項目を分析してください
-⒈　リスクレベル（危険/注意/安全）
-⒉　リスクスコア（0-100）
-⒊　HTTPSの使用有無
-⒋　警告メッセージ（あれば）
-⒌　詳細情報
+以下の項目を分析してください:
+1. リスクレベル（危険/注意/安全）
+2. リスクスコア（0-100）
+3. HTTPSの使用有無
+4. 警告メッセージ（あれば）
+5. 詳細情報
 
 回答は必ず以下のJSON形式で:
 {{
@@ -132,7 +132,6 @@ JSON以外の文章は出力しないでください。
         elif '```' in result_text:
             result_text = result_text.split('```')[1].split('```')[0].strip()
         
-
         result = json.loads(result_text)
         result['url'] = url
         result['ai_powered'] = True
@@ -150,13 +149,13 @@ def analyze_email_with_ai(content, model):
 {content}
 
 以下の項目を分析してください:
-⒈　フィッシング詐欺の可能性（危険/注意/安全）
-⒉　リスクスコア（0-100）
-⒊　検出された疑わしいキーワード
-⒋　緊急性をあおる表現の有無
-⒌　URLの安全性
-⒍　警告メッセージ（あれば）
-⒎　詳細な分析結果
+1. フィッシング詐欺の可能性（危険/注意/安全）
+2. リスクスコア（0-100）
+3. 検出された疑わしいキーワード
+4. 緊急性をあおる表現の有無
+5. URLの安全性
+6. 警告メッセージ（あれば）
+7. 詳細な分析結果
 
 回答は必ず以下のJSON形式で:
 {{
@@ -394,17 +393,20 @@ def main():
         )
 
         if api_key != st.session_state.gemini_api_key:
-            st.session_state/gemini_api_key = api_key
+            st.session_state.gemini_api_key = api_key  # 修正: / → .
+            st.session_state.api_key_validated = False  # キー変更時は再検証が必要
         
-        #APIキーが有効かチェック
+        # APIキーが有効かチェック
         model = None
         use_ai = False
         if api_key:
             model = init_gemini(api_key)
             if model:
-                use_ai = st.checkbox("🤖AI分析を使用",value=True)
+                st.session_state.api_key_validated = True
+                use_ai = st.checkbox("🤖AI分析を使用", value=True)
                 st.success("✅AI分析が有効です")
             else:
+                st.session_state.api_key_validated = False
                 st.error("✖APIキーが無効です。正しいキーを入力してください")
         else:
             st.warning("⚠️APIキーを入力するとAI分析が有効になります")
@@ -461,25 +463,25 @@ def main():
     elif tab == "📞 電話番号チェック":
         st.header("📞 電話番号チェック")
        
-        phone_number = st.text_input("電話番号を入力",placeholder="例: 090-1234-5678,03-1234-5678")
+        phone_number = st.text_input("電話番号を入力", placeholder="例: 090-1234-5678, 03-1234-5678")
        
         col1, col2, col3, col4 = st.columns(4)
         with col1:
             if st.button("✅ 安全サンプル"):
                 phone_number = "03-5555-6666"
-                st.retun()
+                st.rerun()  # 修正: retun → rerun
         with col2:
             if st.button("⚠️ 注意サンプル"):
                 phone_number = "050-1111-2222"
-                st.retun()
+                st.rerun()  # 修正: retun → rerun
         with col3:
             if st.button("🚨 危険サンプル"):
                 phone_number = "0120-999-999"
-                st.retun()
+                st.rerun()  # 修正: retun → rerun
         with col4:
             if st.button("🌍 国際サンプル"):
                 phone_number = "+1-876-555-1234"
-                st.retun()       
+                st.rerun()  # 修正: retun → rerun
 
         if st.button("🔍 チェック", type="primary") and phone_number:
             with st.spinner("分析中..."):
@@ -490,7 +492,7 @@ def main():
                 if result is None:
                     if model and use_ai:
                         st.warning("AI分析に失敗しました。従来の分析を使用します。")
-                    result =analyze_phone_number(phone_number)
+                    result = analyze_phone_number(phone_number)  # 修正: スペース追加
 
                 display_risk_result(result)
    
@@ -498,13 +500,13 @@ def main():
     elif tab == "🔗 URLチェック":
         st.header("🔗 URLチェック")
         
-        url_input = st.text_input("URLを入力",placeholder="例: https://example.com")
+        url_input = st.text_input("URLを入力", placeholder="例: https://example.com")
 
-        if st.button("🔍チェック",type="primary") and url_input:
-            with st.spinner("分析中．．．"):
+        if st.button("🔍チェック", type="primary") and url_input:
+            with st.spinner("分析中..."):
                 result = None
                 if model and use_ai:
-                    result = analyze_url_with_ai(url_input,model)
+                    result = analyze_url_with_ai(url_input, model)
                 
                 if result is None:
                     if model and use_ai:
@@ -525,19 +527,19 @@ def main():
     elif tab == "📧 メールチェック":
         st.header("📧 メールチェック")
         
-        email_content = st.text_area("メール本文を入力",placeholder="メールの内容を貼り付けてください",height=200)
+        email_content = st.text_area("メール本文を入力", placeholder="メールの内容を貼り付けてください", height=200)
 
-        if st.button('🔍チェック',type="primary") and email_content:
-                with st.spinner("AI分析中．．．"):
-                    result = None
+        if st.button('🔍チェック', type="primary") and email_content:
+            with st.spinner("AI分析中..."):
+                result = None
+                if model and use_ai:
+                    result = analyze_email_with_ai(email_content, model)
+
+                if result is None:
                     if model and use_ai:
-                        result = analyze_email_with_ai(email_content,model)
-
-                    if result is None:
-                        if model and use_ai:
-                            st.warning("AI分析に失敗しました。従来の分析を使用します。")
-                        result = analyze_email(email_content)
-               
+                        st.warning("AI分析に失敗しました。従来の分析を使用します。")
+                    result = analyze_email(email_content)
+           
                 display_risk_result(result)
        
         st.info("""
@@ -627,9 +629,8 @@ def main():
         ### 🤖 Gemini AI の使い方
         1. Google AI Studio (https://aistudio.google.com/app/apikey) でAPIキーを取得
         2. サイドバーの「Gemini API キー」欄に入力
-        3. 「🔍 APIキーを検証」ボタンをクリック
-        4. 「AI分析を使用」にチェックを入れる
-        5. Gemini 2.0 Flash による最新AI分析が利用可能に！
+        3. 「AI分析を使用」にチェックを入れる
+        4. Gemini 2.0 Flash による最新AI分析が利用可能に！
        
         **使用モデル:**
         - **Gemini 2.0 Flash (実験版)**: Googleの最新AIモデル
