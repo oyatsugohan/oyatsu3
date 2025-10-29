@@ -462,85 +462,55 @@ def main():
         st.header("📞 電話番号チェック")
        
         phone_number = st.text_input("電話番号を入力",placeholder="例: 090-1234-5678,03-1234-5678")
-        #ここまでチェック済み
        
         col1, col2, col3, col4 = st.columns(4)
         with col1:
-            if st.button("✅ 安全サンプル", use_container_width=True):
-                st.session_state.phone_number_input = "03-5555-6666"
+            if st.button("✅ 安全サンプル"):
+                phone_number = "03-5555-6666"
+                st.retun()
         with col2:
-            if st.button("⚠️ 注意サンプル", use_container_width=True):
-                st.session_state.phone_number_input = "050-1111-2222"
+            if st.button("⚠️ 注意サンプル"):
+                phone_number = "050-1111-2222"
+                st.retun()
         with col3:
-            if st.button("🚨 危険サンプル", use_container_width=True):
-                st.session_state.phone_number_input = "0120-999-999"
+            if st.button("🚨 危険サンプル"):
+                phone_number = "0120-999-999"
+                st.retun()
         with col4:
-            if st.button("🌍 国際サンプル", use_container_width=True):
-                st.session_state.phone_number_input = "+1-876-555-1234"
-       
-        st.divider()
-       
-        # 電話番号入力
-        phone_number = st.text_input(
-            "電話番号を入力", 
-            value=st.session_state.phone_number_input,
-            placeholder="例: 090-1234-5678, 03-1234-5678",
-            key="phone_input"
-        )
-       
+            if st.button("🌍 国際サンプル"):
+                phone_number = "+1-876-555-1234"
+                st.retun()       
+
         if st.button("🔍 チェック", type="primary") and phone_number:
             with st.spinner("分析中..."):
-                if model and use_ai and st.session_state.api_key_validated:
+                result = None
+                if model and use_ai:
                     result = analyze_phone_with_ai(phone_number, model)
-                    if result is None:
+
+                if result is None:
+                    if model and use_ai:
                         st.warning("AI分析に失敗しました。従来の分析を使用します。")
-                        result = analyze_phone_number(phone_number)
-                else:
-                    result = analyze_phone_number(phone_number)
-               
+                    result =analyze_phone_number(phone_number)
+
                 display_risk_result(result)
    
     # URLチェック
     elif tab == "🔗 URLチェック":
         st.header("🔗 URLチェック")
-       
-        # セッション状態にURLを保存
-        if 'url_input_value' not in st.session_state:
-            st.session_state.url_input_value = ""
-       
-        # サンプルボタン
-        st.subheader("📋 サンプルを試す")
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            if st.button("✅ 安全なURL", use_container_width=True):
-                st.session_state.url_input_value = "https://www.google.com"
-        with col2:
-            if st.button("⚠️ HTTP URL", use_container_width=True):
-                st.session_state.url_input_value = "http://example-site.com"
-        with col3:
-            if st.button("🚨 危険なURL", use_container_width=True):
-                st.session_state.url_input_value = "http://paypal-secure-login.com"
-       
-        st.divider()
-       
-        # URL入力
-        url_input = st.text_input(
-            "URLを入力", 
-            value=st.session_state.url_input_value,
-            placeholder="例: https://example.com",
-            key="url_input"
-        )
-       
-        if st.button("🔍 チェック", type="primary") and url_input:
-            with st.spinner("分析中..."):
-                if model and use_ai and st.session_state.api_key_validated:
-                    result = analyze_url_with_ai(url_input, model)
-                    if result is None:
+        
+        url_input = st.text_input("URLを入力",placeholder="例: https://example.com")
+
+        if st.button("🔍チェック",type="primary") and url_input:
+            with st.spinner("分析中．．．"):
+                result = None
+                if model and use_ai:
+                    result = analyze_url_with_ai(url_input,model)
+                
+                if result is None:
+                    if model and use_ai:
                         st.warning("AI分析に失敗しました。従来の分析を使用します。")
-                        result = analyze_url(url_input)
-                else:
                     result = analyze_url(url_input)
-               
+
                 display_risk_result(result)
        
         st.info("""
@@ -554,44 +524,19 @@ def main():
     # メールチェック
     elif tab == "📧 メールチェック":
         st.header("📧 メールチェック")
-       
-        # セッション状態にメール内容を保存
-        if 'email_content_value' not in st.session_state:
-            st.session_state.email_content_value = ""
-       
-        # サンプルボタン
-        st.subheader("📋 サンプルを試す")
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            if st.button("✅ 安全なメール", use_container_width=True):
-                st.session_state.email_content_value = "【Amazon】ご注文ありがとうございます\n\nご注文いただいた商品は10月30日に発送予定です。\n配送状況はアカウントページからご確認いただけます。\n\nAmazonをご利用いただきありがとうございます。"
-        with col2:
-            if st.button("⚠️ 注意が必要", use_container_width=True):
-                st.session_state.email_content_value = "【重要】アカウント情報の確認\n\nお客様のアカウントに不審なアクセスがありました。\n24時間以内に以下のリンクから本人確認を行ってください。\n→ https://account-verify.example.com"
-        with col3:
-            if st.button("🚨 危険なメール", use_container_width=True):
-                st.session_state.email_content_value = "【緊急】アカウント停止通知\n\nあなたのアカウントは不審な活動により一時停止されました。\n今すぐ以下のリンクから確認しないとアカウントが削除されます。\n→ http://security-update-login.com/verify"
-       
-        st.divider()
-       
-        # メール内容入力
-        email_content = st.text_area(
-            "メール本文を入力", 
-            value=st.session_state.email_content_value,
-            placeholder="メールの内容を貼り付けてください", 
-            height=200,
-            key="email_input"
-        )
-       
-        if st.button("🔍 チェック", type="primary") and email_content:
-            with st.spinner("AI分析中..."):
-                if model and use_ai and st.session_state.api_key_validated:
-                    result = analyze_email_with_ai(email_content, model)
+        
+        email_content = st.text_area("メール本文を入力",placeholder="メールの内容を貼り付けてください",height=200)
+
+        if st.button('🔍チェック',type="primary") and email_content:
+                with st.spinner("AI分析中．．．"):
+                    result = None
+                    if model and use_ai:
+                        result = analyze_email_with_ai(email_content,model)
+
                     if result is None:
-                        st.warning("AI分析に失敗しました。従来の分析を使用します。")
+                        if model and use_ai:
+                            st.warning("AI分析に失敗しました。従来の分析を使用します。")
                         result = analyze_email(email_content)
-                else:
-                    result = analyze_email(email_content)
                
                 display_risk_result(result)
        
