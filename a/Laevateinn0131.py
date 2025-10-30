@@ -524,7 +524,8 @@ def main():
     # 電話番号チェック
     elif tab == "📞 電話番号チェック":
         st.header("📞 電話番号チェック")
-        
+        st.warning("⚠️ **注意:** このアプリは補助ツールです。最終的な判断は慎重に行い、疑わしい場合は専門機関に相談してください。")
+
        
         # テキスト入力（セッション状態を使用）
         phone_number = st.text_input(
@@ -554,7 +555,8 @@ def main():
     # URLチェック
     elif tab == "🔗 URLチェック":
         st.header("🔗 URLチェック")
-        
+        st.warning("⚠️ **注意:** このアプリは補助ツールです。最終的な判断は慎重に行い、疑わしい場合は専門機関に相談してください。")
+
         url_input = st.text_input("URLを入力", placeholder="例: https://example.com")
 
         if st.button("🔍チェック", type="primary") and url_input:
