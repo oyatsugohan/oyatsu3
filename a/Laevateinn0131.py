@@ -21,6 +21,8 @@ if 'gemini_api_key' not in st.session_state:
     st.session_state.gemini_api_key = ""
 if 'api_key_validated' not in st.session_state:
     st.session_state.api_key_validated = False
+if 'phone_number' not in st.session_state:
+    st.session_state.phone_number = ""
  
 # クイズデータ
 QUIZ_SAMPLES = [
@@ -522,26 +524,33 @@ def main():
     # 電話番号チェック
     elif tab == "📞 電話番号チェック":
         st.header("📞 電話番号チェック")
-       
-        phone_number = st.text_input("電話番号を入力", placeholder="例: 090-1234-5678, 03-1234-5678")
-       
+        
+        # サンプルボタンの処理
         col1, col2, col3, col4 = st.columns(4)
         with col1:
             if st.button("✅ 安全サンプル"):
-                phone_number = "03-5555-6666"
-                st.rerun()  # 修正: retun → rerun
+                st.session_state.phone_number = "03-5555-6666"
         with col2:
             if st.button("⚠️ 注意サンプル"):
-                phone_number = "050-1111-2222"
-                st.rerun()  # 修正: retun → rerun
+                st.session_state.phone_number = "050-1111-2222"
         with col3:
             if st.button("🚨 危険サンプル"):
-                phone_number = "0120-999-999"
-                st.rerun()  # 修正: retun → rerun
+                st.session_state.phone_number = "0120-999-999"
         with col4:
             if st.button("🌍 国際サンプル"):
-                phone_number = "+1-876-555-1234"
-                st.rerun()  # 修正: retun → rerun
+                st.session_state.phone_number = "+1-876-555-1234"
+        
+        # テキスト入力（セッション状態を使用）
+        phone_number = st.text_input(
+            "電話番号を入力", 
+            value=st.session_state.phone_number,
+            placeholder="例: 090-1234-5678, 03-1234-5678",
+            key="phone_input"
+        )
+        
+        # 入力値をセッション状態に保存
+        if phone_number != st.session_state.phone_number:
+            st.session_state.phone_number = phone_number
 
         if st.button("🔍 チェック", type="primary") and phone_number:
             with st.spinner("分析中..."):
@@ -552,7 +561,7 @@ def main():
                 if result is None:
                     if model and use_ai:
                         st.warning("AI分析に失敗しました。従来の分析を使用します。")
-                    result = analyze_phone_number(phone_number)  # 修正: スペース追加
+                    result = analyze_phone_number(phone_number)
 
                 display_risk_result(result)
    
