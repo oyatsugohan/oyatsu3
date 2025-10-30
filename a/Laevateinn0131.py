@@ -562,7 +562,13 @@ def main():
     elif tab == "🔗 URLチェック":
         st.header("🔗 URLチェック")
         st.warning("⚠️ **注意:** このアプリは補助ツールです。最終的な判断は慎重に行い、疑わしい場合は専門機関に相談してください。")
-
+        st.info("""
+        ### 🔍 チェックポイント
+        - ✓ HTTPSが使用されているか
+        - ✓ ドメイン名にスペルミスがないか
+        - ✓ 短縮URLでないか
+        - ✓ IPアドレスが直接使用されていないか
+        """)
         url_input = st.text_input("URLを入力", placeholder="例: https://example.com")
 
         if st.button("🔍チェック", type="primary") and url_input:
@@ -578,18 +584,19 @@ def main():
 
                 display_risk_result(result)
        
-        st.info("""
-        ### 🔍 チェックポイント
-        - ✓ HTTPSが使用されているか
-        - ✓ ドメイン名にスペルミスがないか
-        - ✓ 短縮URLでないか
-        - ✓ IPアドレスが直接使用されていないか
-        """)
+        
    
     # メールチェック
     elif tab == "📧 メールチェック":
         st.header("📧 メールチェック")
         st.warning("⚠️ **注意:** このアプリは補助ツールです。最終的な判断は慎重に行い、疑わしい場合は専門機関に相談してください。")
+        st.info("""
+        ### 📋 チェックポイント
+        - ✓ 緊急性を煽っていないか
+        - ✓ 個人情報を求めていないか
+        - ✓ 不自然な日本語はないか
+        - ✓ リンク先が正規サイトか
+        """)
         email_content = st.text_area("メール本文を入力", placeholder="メールの内容を貼り付けてください", height=200)
 
         if st.button('🔍チェック', type="primary") and email_content:
@@ -605,13 +612,7 @@ def main():
            
                 display_risk_result(result)
        
-        st.info("""
-        ### 📋 チェックポイント
-        - ✓ 緊急性を煽っていないか
-        - ✓ 個人情報を求めていないか
-        - ✓ 不自然な日本語はないか
-        - ✓ リンク先が正規サイトか
-        """)
+        
    
     # 学習クイズ
     elif tab == "❓ 学習クイズ":
