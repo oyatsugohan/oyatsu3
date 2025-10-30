@@ -21,8 +21,12 @@ if 'gemini_api_key' not in st.session_state:
     st.session_state.gemini_api_key = ""
 if 'api_key_validated' not in st.session_state:
     st.session_state.api_key_validated = False
-if 'phone_number' not in st.session_state:
-    st.session_state.phone_number = ""
+if 'phone_number_input' not in st.session_state:
+    st.session_state.phone_number_input = ""
+if 'url_input' not in st.session_state:
+    st.session_state.url_input = ""
+if 'email_input' not in st.session_state:
+    st.session_state.email_input = ""
  
 # クイズデータ
 QUIZ_SAMPLES = [
@@ -398,6 +402,19 @@ def display_risk_result(result):
         with st.expander("📋 詳細情報"):
             for detail in result['details']:
                 st.write(detail)
+    
+    # 注意書きを追加
+    st.warning("⚠️ **注意:** このアプリは補助ツールです。最終的な判断は慎重に行い、疑わしい場合は専門機関に相談してください。")
+
+# サンプルボタンを設定する関数
+def set_phone_sample(value):
+    st.session_state.phone_number_input = value
+
+def set_url_sample(value):
+    st.session_state.url_input = value
+
+def set_email_sample(value):
+    st.session_state.email_input = value
  
 # メインアプリ
 def main():
@@ -528,31 +545,27 @@ def main():
         # サンプルボタンの処理
         col1, col2, col3, col4 = st.columns(4)
         with col1:
-            if st.button("✅ 安全サンプル"):
-                st.session_state.phone_number = "03-5555-6666"
+            if st.button("✅ 安全サンプル", key="phone_safe"):
+                set_phone_sample("03-5555-6666")
         with col2:
-            if st.button("⚠️ 注意サンプル"):
-                st.session_state.phone_number = "050-1111-2222"
+            if st.button("⚠️ 注意サンプル", key="phone_caution"):
+                set_phone_sample("050-1111-2222")
         with col3:
-            if st.button("🚨 危険サンプル"):
-                st.session_state.phone_number = "0120-999-999"
+            if st.button("🚨 危険サンプル", key="phone_danger"):
+                set_phone_sample("0120-999-999")
         with col4:
-            if st.button("🌍 国際サンプル"):
-                st.session_state.phone_number = "+1-876-555-1234"
+            if st.button("🌍 国際サンプル", key="phone_intl"):
+                set_phone_sample("+1-876-555-1234")
         
         # テキスト入力（セッション状態を使用）
         phone_number = st.text_input(
             "電話番号を入力", 
-            value=st.session_state.phone_number,
+            value=st.session_state.phone_number_input,
             placeholder="例: 090-1234-5678, 03-1234-5678",
-            key="phone_input"
+            key="phone_text_input"
         )
-        
-        # 入力値をセッション状態に保存
-        if phone_number != st.session_state.phone_number:
-            st.session_state.phone_number = phone_number
 
-        if st.button("🔍 チェック", type="primary") and phone_number:
+        if st.button("🔍 チェック", type="primary", key="phone_check") and phone_number:
             with st.spinner("分析中..."):
                 result = None
                 if model and use_ai:
@@ -569,9 +582,26 @@ def main():
     elif tab == "🔗 URLチェック":
         st.header("🔗 URLチェック")
         
-        url_input = st.text_input("URLを入力", placeholder="例: https://example.com")
+        # サンプルボタンの処理
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            if st.button("✅ 安全サンプル", key="url_safe"):
+                set_url_sample("https://www.google.com")
+        with col2:
+            if st.button("⚠️ 注意サンプル", key="url_caution"):
+                set_url_sample("http://example-login.com")
+        with col3:
+            if st.button("🚨 危険サンプル", key="url_danger"):
+                set_url_sample("http://paypal-secure-login.com")
+        
+        url_input = st.text_input(
+            "URLを入力", 
+            value=st.session_state.url_input,
+            placeholder="例: https://example.com",
+            key="url_text_input"
+        )
 
-        if st.button("🔍チェック", type="primary") and url_input:
+        if st.button("🔍チェック", type="primary", key="url_check") and url_input:
             with st.spinner("分析中..."):
                 result = None
                 if model and use_ai:
@@ -596,9 +626,24 @@ def main():
     elif tab == "📧 メールチェック":
         st.header("📧 メールチェック")
         
-        email_content = st.text_area("メール本文を入力", placeholder="メールの内容を貼り付けてください", height=200)
+        # サンプルボタンの処理
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("✅ 安全サンプル", key="email_safe"):
+                set_email_sample("ご注文いただいた商品は10月12日に発送されます。ご利用ありがとうございます。")
+        with col2:
+            if st.button("🚨 危険サンプル", key="email_danger"):
+                set_email_sample("【重要】あなたのアカウントが一時停止されました。24時間以内に以下のリンクから本人確認してください。\nhttp://security-update-login.com")
+        
+        email_content = st.text_area(
+            "メール本文を入力", 
+            value=st.session_state.email_input,
+            placeholder="メールの内容を貼り付けてください", 
+            height=200,
+            key="email_text_area"
+        )
 
-        if st.button('🔍チェック', type="primary") and email_content:
+        if st.button('🔍チェック', type="primary", key="email_check") and email_content:
             with st.spinner("AI分析中..."):
                 result = None
                 if model and use_ai:
