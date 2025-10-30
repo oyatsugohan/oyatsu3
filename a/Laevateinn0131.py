@@ -587,8 +587,8 @@ def main():
         """)
    
     # メールチェック
-    elif tab == "📧 メールチェック":
-        st.header("📧 メールチェック")
+    elif tab == "🔍 メールチェック":
+        st.header("🔍 メールチェック")
         st.warning("⚠️ **注意:** このアプリは補助ツールです。最終的な判断は慎重に行い、疑わしい場合は専門機関に相談してください。")
         email_content = st.text_area("メール本文を入力", placeholder="メールの内容を貼り付けてください", height=200)
 
