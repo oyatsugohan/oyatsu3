@@ -525,21 +525,7 @@ def main():
     elif tab == "📞 電話番号チェック":
         st.header("📞 電話番号チェック")
         
-        # サンプルボタンの処理
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            if st.button("✅ 安全サンプル"):
-                st.session_state.phone_number = "03-5555-6666"
-        with col2:
-            if st.button("⚠️ 注意サンプル"):
-                st.session_state.phone_number = "050-1111-2222"
-        with col3:
-            if st.button("🚨 危険サンプル"):
-                st.session_state.phone_number = "0120-999-999"
-        with col4:
-            if st.button("🌍 国際サンプル"):
-                st.session_state.phone_number = "+1-876-555-1234"
-        
+       
         # テキスト入力（セッション状態を使用）
         phone_number = st.text_input(
             "電話番号を入力", 
